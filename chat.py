@@ -4,6 +4,9 @@ import os
 
 app = Flask(__name__)
 
+if not os.path.exists('logs'):
+    os.makedirs('logs')
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -14,7 +17,7 @@ def join_room(room):
 
 @app.route('/api/chat/<room>', methods=['GET', 'POST'])
 def chat(room):
-    log_file = os.path.join('logs', f'{room}.log')
+    log_file = os.path.join('logs', f'{room}.log') # gets the room file
     
     if request.method == 'POST':
         user_message = request.form.get('msg', '').strip()
