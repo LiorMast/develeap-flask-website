@@ -12,6 +12,9 @@ RUN mkdir -p logs
 EXPOSE 80 5000
 VOLUME [ "/app/logs" ]
 
+ENV DB_PASSWORD='1234'
+ENV DB_HOSTNAME='mysql_db'
+
 RUN adduser -D myuser
 RUN chown -R myuser:myuser /app/logs
 USER myuser

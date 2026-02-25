@@ -1,8 +1,15 @@
 from flask import Flask, render_template, request, jsonify, abort
+from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 import os
 
 app = Flask(__name__)
+
+password = os.getenv('DB_PASSWORD')
+hostname = os.getenv('DB_HOSTNAME')
+app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql+pymysql://root:{password}@{hostname}:3306/chat_db'
+
+db = SQLAlchemy(app)
 
 if not os.path.exists('logs'):
     os.makedirs('logs')
