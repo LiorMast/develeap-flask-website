@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 import os
 
+# implemented by lior masturov
 app = Flask(__name__)
 
 password = os.getenv('DB_PASSWORD')
@@ -23,13 +24,16 @@ class Message(db.Model):
     def __repr__(self):
         return f'[{self.timestamp}] {self.username}: {self.message}\n'
 
+# implemented by adan butto
 @app.get("/")
 def index():
     return render_template("index.html")
 
+ # implemented by lior masturov
 @app.route('/<room>', methods=['GET'])
 def join_room(room):
     return render_template('index.html', room=room)
+
 
 @app.post('/api/chat/<room>')
 def chat(room):
@@ -42,7 +46,6 @@ def chat(room):
         if not username:
             username = 'Anonymous'
         
-        # Format: [2024-09-10 14:00:51] Roey: Hi everybody!
         timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         
         new_message = Message(timestamp=timestamp, room=room, username=username, message=user_message)
@@ -51,6 +54,7 @@ def chat(room):
             
         return jsonify({'response': 'Success'}), 201
 
+# implemented by adan butto
 @app.get("/api/chat/<room>")
 def get_chat(room):
     msgs = Message.query.filter_by(room=room).all()
