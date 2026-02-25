@@ -24,8 +24,7 @@ def chat(room):
         username = request.form.get('username', '').strip()
         
         if not user_message:
-            return jsonify({'error': 'Message content is required'}), 400
-            
+            return jsonify({'error': 'Message content is required'}), 400    
         if not username:
             username = 'Anonymous'
         
@@ -37,12 +36,6 @@ def chat(room):
             f.write(formatted_message)
             
         return jsonify({'response': 'Success'}), 201
-    else:
-        # For GET requests (which updateChat does)
-        if os.path.exists(log_file):
-            with open(log_file, 'r', encoding='utf-8') as f:
-                return f.read(), 200
-        return "No messages yet\n", 200
 
 if __name__ == '__main__':
     app.run(debug=True)
