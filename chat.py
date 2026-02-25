@@ -11,8 +11,17 @@ app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql+pymysql://root:{password}@{hostn
 
 db = SQLAlchemy(app)
 
-if not os.path.exists('logs'):
-    os.makedirs('logs')
+class Message(db.Model):
+    __tablename__ = 'messages'
+
+    # Mapping the columns
+    timestamp = db.Column(db.DateTime, primary_key=True, default=datetime.utcnow)
+    room = db.Column(db.String(255), nullable=False)
+    username = db.Column(db.String(255), nullable=False)
+    message = db.Column(db.String(1024), nullable=False)
+
+    def __repr__(self):
+        return f'[{self.timestamp}] {self.username}: {self.message}\n'
 
 @app.get("/")
 def index():
@@ -24,8 +33,6 @@ def join_room(room):
 
 @app.post('/api/chat/<room>')
 def chat(room):
-    log_file = os.path.join('logs', f'{room}.log') # gets the room file
-    
     if request.method == 'POST':
         user_message = request.form.get('msg', '').strip()
         username = request.form.get('username', '').strip()
@@ -37,24 +44,19 @@ def chat(room):
         
         # Format: [2024-09-10 14:00:51] Roey: Hi everybody!
         timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        formatted_message = f"[{timestamp}] {username}: {user_message}\n"
         
-        with open(log_file, 'a', encoding='utf-8') as f:
-            f.write(formatted_message)
+        new_message = Message(timestamp=timestamp, room=room, username=username, message=user_message)
+        db.session.add(new_message)
+        db.session.commit()
             
         return jsonify({'response': 'Success'}), 201
 
 @app.get("/api/chat/<room>")
 def get_chat(room):
-	room_file = os.path.join("./logs/", f"{room}.log")
-	if not os.path.isfile(room_file):
-		abort(404, description="Room not found")
-	with open(room_file, "r", encoding="utf-8") as handle:
-		return handle.read()
+    msgs = Message.query.filter_by(room=room).all()
+    return "".join(repr(msg) for msg in msgs)
      
 if __name__ == '__main__':
-    
     with app.app_context():
         db.create_all()
-        
     app.run(debug=True, host='0.0.0.0')
