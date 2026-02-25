@@ -1,3 +1,4 @@
+USE chat_db;
 CREATE TABLE IF NOT EXISTS rooms (
     name VARCHAR(255) PRIMARY KEY
 );
