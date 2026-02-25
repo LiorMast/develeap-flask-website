@@ -17,9 +17,14 @@ def chat(room):
     log_file = os.path.join('logs', f'{room}.log')
     
     if request.method == 'POST':
-        # Added .get() with a default to avoid crashing if 'msg' is missing
-        user_message = request.form.get('msg', '')
-        username = request.form.get('username', 'Anonymous')
+        user_message = request.form.get('msg', '').strip()
+        username = request.form.get('username', '').strip()
+        
+        if not user_message:
+            return jsonify({'error': 'Message content is required'}), 400
+            
+        if not username:
+            username = 'Anonymous'
         
         # Format: [2024-09-10 14:00:51] Roey: Hi everybody!
         timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -28,13 +33,13 @@ def chat(room):
         with open(log_file, 'a', encoding='utf-8') as f:
             f.write(formatted_message)
             
-        return jsonify({'response': 'Success'})
+        return jsonify({'response': 'Success'}), 201
     else:
         # For GET requests (which updateChat does)
         if os.path.exists(log_file):
             with open(log_file, 'r', encoding='utf-8') as f:
-                return f.read()
-        return "No messages yet\n"
+                return f.read(), 200
+        return "No messages yet\n", 200
 
 if __name__ == '__main__':
     app.run(debug=True)
