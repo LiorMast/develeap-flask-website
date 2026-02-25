@@ -1,0 +1,7 @@
+FROM mysql:8.0
+
+# Add custom MySQL config and initial schema/data
+COPY my.cnf /etc/mysql/conf.d/my.cnf
+COPY dump.sql /docker-entrypoint-initdb.d/dump.sql
+
+EXPOSE 3306

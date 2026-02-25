@@ -1,11 +1,23 @@
 from flask import Flask, render_template, request, jsonify, abort
 from datetime import datetime
 import os
+import pymysql
 
 app = Flask(__name__)
 
-if not os.path.exists('logs'):
-    os.makedirs('logs')
+# Database configuration
+DB_CONFIG = {
+    'host': os.environ.get('DB_HOST', 'localhost'),
+    'user': os.environ.get('DB_USER', 'chatuser'),
+    'password': os.environ.get('DB_PASSWORD', 'chatpass'),
+    'database': os.environ.get('DB_NAME', 'chatdb'),
+    'charset': 'utf8mb4',
+    'cursorclass': pymysql.cursors.DictCursor
+}
+
+def get_db_connection():
+    """Establish a database connection"""
+    return pymysql.connect(**DB_CONFIG)
 
 @app.get("/")
 def index():
@@ -17,33 +29,48 @@ def join_room(room):
 
 @app.post('/api/chat/<room>')
 def chat(room):
-    log_file = os.path.join('logs', f'{room}.log') # gets the room file
+    user_message = request.form.get('msg', '').strip()
+    username = request.form.get('username', '').strip()
     
-    if request.method == 'POST':
-        user_message = request.form.get('msg', '').strip()
-        username = request.form.get('username', '').strip()
+    if not user_message:
+        return jsonify({'error': 'Message content is required'}), 400    
+    if not username:
+        username = 'Anonymous'
+    
+    try:
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            sql = "INSERT INTO messages (username, room, msg) VALUES (%s, %s, %s)"
+            cursor.execute(sql, (username, room, user_message))
+        connection.commit()
+        connection.close()
         
-        if not user_message:
-            return jsonify({'error': 'Message content is required'}), 400    
-        if not username:
-            username = 'Anonymous'
-        
-        # Format: [2024-09-10 14:00:51] Roey: Hi everybody!
-        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        formatted_message = f"[{timestamp}] {username}: {user_message}\n"
-        
-        with open(log_file, 'a', encoding='utf-8') as f:
-            f.write(formatted_message)
-            
         return jsonify({'response': 'Success'}), 201
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.get("/api/chat/<room>")
 def get_chat(room):
-	room_file = os.path.join("./logs/", f"{room}.log")
-	if not os.path.isfile(room_file):
-		abort(404, description="Room not found")
-	with open(room_file, "r", encoding="utf-8") as handle:
-		return handle.read()
+    try:
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            sql = "SELECT username, timestamp, msg FROM messages WHERE room = %s ORDER BY timestamp ASC"
+            cursor.execute(sql, (room,))
+            messages = cursor.fetchall()
+        connection.close()
+        
+        if not messages:
+            return jsonify({'messages': [], 'info': 'No messages in this room yet'}), 200
+        
+        # Format messages like the original file format: [timestamp] username: message
+        formatted_messages = []
+        for msg in messages:
+            timestamp = msg['timestamp'].strftime('%Y-%m-%d %H:%M:%S')
+            formatted_messages.append(f"[{timestamp}] {msg['username']}: {msg['msg']}")
+        
+        return '\n'.join(formatted_messages) + '\n'
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
      
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)
