@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, abort
 from datetime import datetime
 import os
 
@@ -7,15 +7,15 @@ app = Flask(__name__)
 if not os.path.exists('logs'):
     os.makedirs('logs')
 
-@app.route('/')
+@app.get("/")
 def index():
-    return render_template('index.html')
+    return render_template("index.html")
 
 @app.route('/<room>', methods=['GET'])
 def join_room(room):
     return render_template('index.html', room=room)
 
-@app.route('/api/chat/<room>', methods=['GET', 'POST'])
+@app.post('/api/chat/<room>')
 def chat(room):
     log_file = os.path.join('logs', f'{room}.log') # gets the room file
     
@@ -37,5 +37,19 @@ def chat(room):
             
         return jsonify({'response': 'Success'}), 201
 
+@app.get("/api/chat/<room>")
+def get_chat(room):
+	room_file = os.path.join("./logs/", f"{room}.log")
+	if not os.path.isfile(room_file):
+		abort(404, description="Room not found")
+	with open(room_file, "r", encoding="utf-8") as handle:
+		return handle.read()
+     
 if __name__ == '__main__':
     app.run(debug=True)
+
+
+
+
+
+
