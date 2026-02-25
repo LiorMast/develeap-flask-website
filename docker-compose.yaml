@@ -1,0 +1,33 @@
+services:
+  mysql_db:
+    build:
+      dockerfile: Dockerfile.mysql
+    environment:
+      - MYSQL_DATABASE=chat_db
+      - MYSQL_ROOT_PASSWORD=1234
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p1234"]
+      start_period: 30s
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  chat_app:
+    build:
+      dockerfile: Dockerfile.chat
+    environment:
+      - DB_HOSTNAME=mysql_db
+      - DB_PASSWORD=1234
+    ports:
+      - "80:5000"
+    depends_on:
+      mysql_db:
+        condition: service_healthy
+    restart: always
+
+volumes:
+  mysql_data:
