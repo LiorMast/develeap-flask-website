@@ -1,0 +1,8 @@
+FROM mysql:9.0.1-oraclelinux9
+
+ENV MYSQL_DATABASE=chat_db
+ENV MYSQL_ROOT_PASSWORD='1234'
+
+EXPOSE 3306
+
+ENTRYPOINT [ "" ]
