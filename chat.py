@@ -1,13 +1,13 @@
 import os
 
-from flask import Flask, abort, send_file
+from flask import Flask, abort, send_file, render_template
 
 app = Flask(__name__)
 
 
 @app.get("/")
 def index():
-	return send_file("index.html")
+    return render_template("index.html")
 
 
 @app.get("/api/chat/<room>")
