@@ -47,9 +47,3 @@ def get_chat(room):
      
 if __name__ == '__main__':
     app.run(debug=True)
-
-
-
-
-
-
